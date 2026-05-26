@@ -30,3 +30,11 @@ local.properties
 # OS files
 .DS_Store
 Thumbs.db
+
+# Игнорируем сгенерированные растровые иконки
+**/mipmap-hdpi/ic_launcher*.webp
+**/mipmap-mdpi/ic_launcher*.webp
+**/mipmap-xhdpi/ic_launcher*.webp
+**/mipmap-xxhdpi/ic_launcher*.webp
+**/mipmap-xxxhdpi/ic_launcher*.webp
+**/mipmap-nodpi/ic_launcher*.png
