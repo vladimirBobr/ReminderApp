@@ -2,6 +2,7 @@ package com.example.reminderapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -32,6 +33,14 @@ class MainActivity : ComponentActivity() {
                 val isEditScreenVisible by viewModel.isEditScreenVisible.collectAsState()
                 val editingEvent by viewModel.editingEvent.collectAsState()
                 val isRawDataVisible by viewModel.isRawDataVisible.collectAsState()
+
+                // Intercept system back button to navigate back within the app
+                BackHandler(enabled = isEditScreenVisible || isRawDataVisible) {
+                    when {
+                        isEditScreenVisible -> viewModel.closeEditScreen()
+                        isRawDataVisible -> viewModel.closeRawData()
+                    }
+                }
 
                 when {
                     isEditScreenVisible -> {
