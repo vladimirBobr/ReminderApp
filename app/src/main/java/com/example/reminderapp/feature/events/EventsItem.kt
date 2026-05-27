@@ -1,35 +1,41 @@
-package com.example.reminderapp.ui.components
+package com.example.reminderapp.feature.events
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.reminderapp.data.model.Event
+import com.example.reminderapp.core.model.Event
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
+/**
+ * A card displaying a single event.
+ *
+ * @param event The event to display.
+ * @param onClick Called when the card is tapped (for navigation to edit screen).
+ * @param modifier Optional modifier.
+ */
 @Composable
-fun EventItem(
+fun EventsItem(
     event: Event,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
@@ -87,16 +93,17 @@ fun EventItem(
 
 @Preview(showBackground = true)
 @Composable
-private fun EventItemPreview() {
+private fun EventsItemPreview() {
     MaterialTheme {
-        EventItem(
+        EventsItem(
             event = Event(
-                id = 1,
+                id = "preview-uuid",
                 title = "Встреча с заказчиком",
                 description = "Обсуждение нового проекта",
                 date = LocalDate.now(),
                 time = LocalTime.of(14, 0)
-            )
+            ),
+            onClick = { }
         )
     }
 }
