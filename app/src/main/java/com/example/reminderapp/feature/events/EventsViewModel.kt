@@ -39,6 +39,10 @@ class EventsViewModel(
     private val _isEditScreenVisible = MutableStateFlow(false)
     val isEditScreenVisible: StateFlow<Boolean> = _isEditScreenVisible.asStateFlow()
 
+    /** True when the raw data screen is visible. */
+    private val _isRawDataVisible = MutableStateFlow(false)
+    val isRawDataVisible: StateFlow<Boolean> = _isRawDataVisible.asStateFlow()
+
     init {
         loadEvents()
     }
@@ -76,6 +80,22 @@ class EventsViewModel(
     fun closeEditScreen() {
         _editingEvent.value = null
         _isEditScreenVisible.value = false
+    }
+
+    // ==================== Raw Data ====================
+
+    /**
+     * Opens the raw data (debug) screen.
+     */
+    fun openRawData() {
+        _isRawDataVisible.value = true
+    }
+
+    /**
+     * Closes the raw data screen.
+     */
+    fun closeRawData() {
+        _isRawDataVisible.value = false
     }
 
     // ==================== CRUD ====================

@@ -47,6 +47,14 @@ class EventsRepository(private val storageDir: File) {
         return readEvents(deletedFile)
     }
 
+    /**
+     * Returns the raw YAML content of the active events file (for debugging).
+     */
+    fun getRawActiveYaml(): String {
+        ensureFilesExist()
+        return activeFile.readText()
+    }
+
     // ==================== CREATE / UPDATE ====================
 
     /**
