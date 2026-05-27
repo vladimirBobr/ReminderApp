@@ -1,5 +1,7 @@
 package com.example.reminderapp.feature.events
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,18 +10,30 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,9 +44,7 @@ import java.util.Locale
 
 /**
  * Main screen displaying the list of events grouped by date.
- *
- * @param viewModel The events ViewModel.
- * @param modifier Optional modifier.
+ * Supports swipe-to-delete and FAB for adding new events.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,6 +55,9 @@ fun EventsListScreen(
     val events by viewModel.events.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    // Track which event is pending deletion confirmation
+    var pendingDeleteEvent by remember { mutableStateOf<Event?>(null) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -58,6 +73,17 @@ fun EventsListScreen(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { viewModel.openEditScreen(null) },
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Добавить событие"
+                )
+            }
         }
     ) { innerPadding ->
         when {
@@ -108,21 +134,38 @@ fun EventsListScreen(
                 EventList(
                     events = events,
                     onEventClick = { event -> viewModel.openEditScreen(event) },
+                    onSwipeDelete = { event -> pendingDeleteEvent = event },
                     contentPadding = innerPadding
                 )
             }
         }
     }
+
+    // Delete confirmation dialog
+    pendingDeleteEvent?.let { event ->
+        ConfirmDeleteDialog(
+            eventTitle = event.title,
+            onConfirm = {
+                viewModel.deleteEvent(event.id)
+                pendingDeleteEvent = null
+            },
+            onDismiss = {
+                pendingDeleteEvent = null
+            }
+        )
+    }
 }
 
 /**
- * Lazy list of events grouped by date with date separator headers.
+ * Lazy list of events grouped by date with swipe-to-delete support.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EventList(
     events: List<Event>,
     onEventClick: (Event) -> Unit,
-    contentPadding: androidx.compose.foundation.layout.PaddingValues
+    onSwipeDelete: (Event) -> Unit,
+    contentPadding: PaddingValues
 ) {
     val groupedEvents = events.groupBy { it.date }
     val sortedDates = groupedEvents.keys.sorted()
@@ -150,12 +193,71 @@ private fun EventList(
                 items = dateEvents,
                 key = { it.id }
             ) { event ->
-                EventsItem(
+                SwipeToDismissEventItem(
                     event = event,
-                    onClick = { onEventClick(event) }
+                    onClick = { onEventClick(event) },
+                    onDelete = { onSwipeDelete(event) }
                 )
             }
         }
+    }
+}
+
+/**
+ * Wraps EventsItem in a SwipeToDismissBox for swipe-to-delete.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SwipeToDismissEventItem(
+    event: Event,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                false // Don't actually dismiss - let the dialog handle it
+            } else {
+                false
+            }
+        }
+    )
+
+    // Animate background color on swipe
+    val backgroundColor by animateColorAsState(
+        targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
+            MaterialTheme.colorScheme.errorContainer
+        } else {
+            Color.Transparent
+        },
+        label = "swipe_bg"
+    )
+
+    SwipeToDismissBox(
+        state = dismissState,
+        backgroundContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(backgroundColor)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.CenterEnd
+            ) {
+                Text(
+                    text = "Удалить",
+                    color = MaterialTheme.colorScheme.onErrorContainer,
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        },
+        enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = true
+    ) {
+        EventsItem(
+            event = event,
+            onClick = onClick
+        )
     }
 }
 
