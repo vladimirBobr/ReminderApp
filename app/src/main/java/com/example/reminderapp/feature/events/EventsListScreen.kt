@@ -1,12 +1,14 @@
 package com.example.reminderapp.feature.events
 
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,32 +23,36 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SwipeToDismissBox
-import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.example.reminderapp.core.model.Event
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.roundToInt
+
+private val SWIPE_THRESHOLD_DP = 80.dp
 
 /**
  * Main screen displaying the list of events grouped by date.
- * Supports swipe-to-delete and FAB for adding new events.
+ * Supports swipe-left (delete with confirmation) and swipe-right (move to tomorrow).
+ * Two-stage swipe: first shows label, further fires action.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +64,6 @@ fun EventsListScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
-    // Track which event is pending deletion confirmation
     var pendingDeleteEvent by remember { mutableStateOf<Event?>(null) }
 
     Scaffold(
@@ -145,6 +150,9 @@ fun EventsListScreen(
                     events = events,
                     onEventClick = { event -> viewModel.openEditScreen(event) },
                     onSwipeDelete = { event -> pendingDeleteEvent = event },
+                    onSwipeMoveToTomorrow = { event ->
+                        viewModel.moveEventToTomorrow(event.id)
+                    },
                     contentPadding = innerPadding
                 )
             }
@@ -167,14 +175,14 @@ fun EventsListScreen(
 }
 
 /**
- * Lazy list of events grouped by date with swipe-to-delete support.
+ * Lazy list of events grouped by date.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun EventList(
     events: List<Event>,
     onEventClick: (Event) -> Unit,
     onSwipeDelete: (Event) -> Unit,
+    onSwipeMoveToTomorrow: (Event) -> Unit,
     contentPadding: PaddingValues
 ) {
     val groupedEvents = events.groupBy { it.date }
@@ -193,20 +201,19 @@ private fun EventList(
         sortedDates.forEach { date ->
             val dateEvents = groupedEvents[date] ?: return@forEach
 
-            // Date separator header
             item(key = "date_header_${date.toEpochDay()}") {
                 DateHeader(date = date)
             }
 
-            // Events for this date
             items(
                 items = dateEvents,
                 key = { it.id }
             ) { event ->
-                SwipeToDismissEventItem(
+                SwipeableEventCard(
                     event = event,
                     onClick = { onEventClick(event) },
-                    onDelete = { onSwipeDelete(event) }
+                    onDelete = { onSwipeDelete(event) },
+                    onMoveToTomorrow = { onSwipeMoveToTomorrow(event) }
                 )
             }
         }
@@ -214,66 +221,102 @@ private fun EventList(
 }
 
 /**
- * Wraps EventsItem in a SwipeToDismissBox for swipe-to-delete.
+ * A card with swipe gestures:
+ * - Swipe past 80dp label appears ("На завтра" / "Удалить")
+ * - Action fires **only on release** past the threshold
+ * - Swipe back below threshold → release → nothing happens
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SwipeToDismissEventItem(
+private fun SwipeableEventCard(
     event: Event,
     onClick: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onMoveToTomorrow: () -> Unit
 ) {
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
-                false // Don't actually dismiss - let the dialog handle it
-            } else {
-                false
-            }
+    val density = LocalDensity.current
+    val thresholdPx = with(density) { SWIPE_THRESHOLD_DP.toPx() }
+
+    // Track offset for visual feedback
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+
+    // Animate snap-back to 0
+    val animatedOffset by animateFloatAsState(
+        targetValue = dragOffset,
+        label = "swipe_offset"
+    )
+
+    // Determine background based on drag direction (single threshold)
+    val bgColor = when {
+        animatedOffset > thresholdPx -> MaterialTheme.colorScheme.tertiaryContainer
+        animatedOffset < -thresholdPx -> MaterialTheme.colorScheme.errorContainer
+        else -> Color.Transparent
+    }
+    val bgLabel = when {
+        animatedOffset > thresholdPx -> "На завтра"
+        animatedOffset < -thresholdPx -> "Удалить"
+        else -> ""
+    }
+    val bgAlignment = when {
+        animatedOffset > thresholdPx -> Alignment.CenterStart
+        animatedOffset < -thresholdPx -> Alignment.CenterEnd
+        else -> Alignment.CenterEnd
+    }
+    val bgLabelColor = when {
+        animatedOffset > thresholdPx -> MaterialTheme.colorScheme.onTertiaryContainer
+        animatedOffset < -thresholdPx -> MaterialTheme.colorScheme.onErrorContainer
+        else -> Color.Transparent
+    }
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        // Background label
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(bgColor)
+                .padding(horizontal = 20.dp),
+            contentAlignment = bgAlignment
+        ) {
+            Text(
+                text = bgLabel,
+                color = bgLabelColor,
+                style = MaterialTheme.typography.labelLarge
+            )
         }
-    )
 
-    // Animate background color on swipe
-    val backgroundColor by animateColorAsState(
-        targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart) {
-            MaterialTheme.colorScheme.errorContainer
-        } else {
-            Color.Transparent
-        },
-        label = "swipe_bg"
-    )
-
-    SwipeToDismissBox(
-        state = dismissState,
-        backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(backgroundColor)
-                    .padding(horizontal = 20.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Text(
-                    text = "Удалить",
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-        },
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true
-    ) {
-        EventsItem(
-            event = event,
-            onClick = onClick
-        )
+        // Foreground card with offset + gesture detection
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragEnd = {
+                            if (dragOffset > thresholdPx) {
+                                onMoveToTomorrow()
+                            } else if (dragOffset < -thresholdPx) {
+                                onDelete()
+                            }
+                            dragOffset = 0f
+                        },
+                        onDragCancel = {
+                            dragOffset = 0f
+                        },
+                        onHorizontalDrag = { _, dragAmount ->
+                            dragOffset += dragAmount
+                            // Visual only — no action until release
+                        }
+                    )
+                }
+        ) {
+            EventsItem(
+                event = event,
+                onClick = onClick
+            )
+        }
     }
 }
 
 /**
  * A date header displayed between groups of events.
- * Shows "Сегодня", "Вчера", "Завтра", or the full date.
  */
 @Composable
 private fun DateHeader(date: LocalDate) {

@@ -191,6 +191,16 @@ fun EventsEditScreen(
                 }
             }
 
+            // Move to tomorrow button — sets date to tomorrow from today
+            if (isEditing) {
+                OutlinedButton(
+                    onClick = { date = LocalDate.now().plusDays(1) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Перенести на завтра →")
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Save button

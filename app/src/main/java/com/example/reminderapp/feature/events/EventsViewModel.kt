@@ -98,6 +98,22 @@ class EventsViewModel(
         _isRawDataVisible.value = false
     }
 
+    // ==================== MOVE ====================
+
+    /**
+     * Moves an event to tomorrow (date +1 day).
+     */
+    fun moveEventToTomorrow(id: String) {
+        viewModelScope.launch {
+            try {
+                repository.moveToTomorrow(id)
+                loadEvents()
+            } catch (e: Exception) {
+                _error.value = "Ошибка переноса: ${e.localizedMessage}"
+            }
+        }
+    }
+
     // ==================== CRUD ====================
 
     /**

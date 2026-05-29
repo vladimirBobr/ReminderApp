@@ -81,6 +81,19 @@ class EventsRepository(private val storageDir: File) {
         writeEvents(activeFile, events)
     }
 
+    // ==================== MOVE ====================
+
+    /**
+     * Moves an event to tomorrow (date +1 day).
+     */
+    fun moveToTomorrow(id: String) {
+        val events = getAll()
+        val updated = events.map { event ->
+            if (event.id == id) event.copy(date = event.date.plusDays(1)) else event
+        }
+        writeEvents(activeFile, updated)
+    }
+
     // ==================== SOFT DELETE ====================
 
     /**
