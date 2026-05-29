@@ -14,7 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -77,10 +77,10 @@ fun EventsListScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.openRawData() }) {
+                    IconButton(onClick = { viewModel.openSettings() }) {
                         Icon(
-                            imageVector = Icons.Default.Code,
-                            contentDescription = "Raw Data"
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Настройки"
                         )
                     }
                 },

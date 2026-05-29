@@ -43,6 +43,10 @@ class EventsViewModel(
     private val _isRawDataVisible = MutableStateFlow(false)
     val isRawDataVisible: StateFlow<Boolean> = _isRawDataVisible.asStateFlow()
 
+    /** True when the settings screen is visible. */
+    private val _isSettingsVisible = MutableStateFlow(false)
+    val isSettingsVisible: StateFlow<Boolean> = _isSettingsVisible.asStateFlow()
+
     init {
         loadEvents()
     }
@@ -96,6 +100,22 @@ class EventsViewModel(
      */
     fun closeRawData() {
         _isRawDataVisible.value = false
+    }
+
+    // ==================== Settings ====================
+
+    /**
+     * Opens the settings screen.
+     */
+    fun openSettings() {
+        _isSettingsVisible.value = true
+    }
+
+    /**
+     * Closes the settings screen.
+     */
+    fun closeSettings() {
+        _isSettingsVisible.value = false
     }
 
     // ==================== MOVE ====================

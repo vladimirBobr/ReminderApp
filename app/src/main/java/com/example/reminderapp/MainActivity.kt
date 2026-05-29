@@ -14,6 +14,7 @@ import com.example.reminderapp.feature.events.EventsEditScreen
 import com.example.reminderapp.feature.events.EventsListScreen
 import com.example.reminderapp.feature.events.EventsViewModel
 import com.example.reminderapp.feature.events.RawDataScreen
+import com.example.reminderapp.feature.settings.SettingsScreen
 import com.example.reminderapp.ui.theme.ReminderAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -33,12 +34,14 @@ class MainActivity : ComponentActivity() {
                 val isEditScreenVisible by viewModel.isEditScreenVisible.collectAsState()
                 val editingEvent by viewModel.editingEvent.collectAsState()
                 val isRawDataVisible by viewModel.isRawDataVisible.collectAsState()
+                val isSettingsVisible by viewModel.isSettingsVisible.collectAsState()
 
                 // Intercept system back button to navigate back within the app
-                BackHandler(enabled = isEditScreenVisible || isRawDataVisible) {
+                BackHandler(enabled = isEditScreenVisible || isRawDataVisible || isSettingsVisible) {
                     when {
                         isEditScreenVisible -> viewModel.closeEditScreen()
                         isRawDataVisible -> viewModel.closeRawData()
+                        isSettingsVisible -> viewModel.closeSettings()
                     }
                 }
 
@@ -58,6 +61,14 @@ class MainActivity : ComponentActivity() {
                         RawDataScreen(
                             repository = repository,
                             onBack = { viewModel.closeRawData() },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    isSettingsVisible -> {
+                        SettingsScreen(
+                            onNavigateToRawData = { viewModel.openRawData() },
+                            onBack = { viewModel.closeSettings() },
                             modifier = Modifier.fillMaxSize()
                         )
                     }
