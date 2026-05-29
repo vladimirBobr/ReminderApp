@@ -107,6 +107,19 @@ class EventsRepository(private val storageDir: File) {
         writeEvents(deletedFile, deleted)
     }
 
+    // ==================== RESTORE ====================
+
+    /**
+     * Restores a soft-deleted event: removes from [deletedFile] and appends to [activeFile].
+     */
+    fun restore(id: String) {
+        val deleted = getDeleted()
+        val event = deleted.find { it.id == id } ?: return
+        writeEvents(deletedFile, deleted.filter { it.id != id })
+        val active = getAll() + event
+        writeEvents(activeFile, active)
+    }
+
     // ==================== INTERNALS ====================
 
     /**

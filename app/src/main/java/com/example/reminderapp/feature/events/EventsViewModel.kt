@@ -47,6 +47,14 @@ class EventsViewModel(
     private val _isSettingsVisible = MutableStateFlow(false)
     val isSettingsVisible: StateFlow<Boolean> = _isSettingsVisible.asStateFlow()
 
+    /** List of soft-deleted events. */
+    private val _deletedEvents = MutableStateFlow<List<Event>>(emptyList())
+    val deletedEvents: StateFlow<List<Event>> = _deletedEvents.asStateFlow()
+
+    /** True when the deleted events screen is visible. */
+    private val _isDeletedEventsVisible = MutableStateFlow(false)
+    val isDeletedEventsVisible: StateFlow<Boolean> = _isDeletedEventsVisible.asStateFlow()
+
     init {
         loadEvents()
     }
@@ -116,6 +124,51 @@ class EventsViewModel(
      */
     fun closeSettings() {
         _isSettingsVisible.value = false
+    }
+
+    // ==================== Deleted Events ====================
+
+    /**
+     * Opens the deleted events screen and loads the list.
+     */
+    fun openDeletedEvents() {
+        _isDeletedEventsVisible.value = true
+        loadDeletedEvents()
+    }
+
+    /**
+     * Closes the deleted events screen.
+     */
+    fun closeDeletedEvents() {
+        _isDeletedEventsVisible.value = false
+    }
+
+    /**
+     * Loads soft-deleted events from the repository.
+     */
+    fun loadDeletedEvents() {
+        viewModelScope.launch {
+            try {
+                _deletedEvents.value = repository.getDeleted()
+            } catch (e: Exception) {
+                _error.value = "Ошибка загрузки корзины: ${e.localizedMessage}"
+            }
+        }
+    }
+
+    /**
+     * Restores a soft-deleted event back to active list.
+     */
+    fun restoreEvent(id: String) {
+        viewModelScope.launch {
+            try {
+                repository.restore(id)
+                loadDeletedEvents()
+                loadEvents()
+            } catch (e: Exception) {
+                _error.value = "Ошибка восстановления: ${e.localizedMessage}"
+            }
+        }
     }
 
     // ==================== MOVE ====================

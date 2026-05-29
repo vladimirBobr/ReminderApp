@@ -31,11 +31,12 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun EventsItem(
     event: Event,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Card(
-        onClick = onClick,
+        onClick = onClick ?: {},
+        enabled = onClick != null,
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant

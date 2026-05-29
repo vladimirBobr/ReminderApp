@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun SettingsScreen(
     onNavigateToRawData: () -> Unit,
+    onNavigateToDeletedEvents: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -66,6 +68,22 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
+            // ==================== Data Section ====================
+            SectionHeader(title = "Данные")
+
+            SettingsItem(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                title = "Удалённые события",
+                onClick = onNavigateToDeletedEvents
+            )
+
             // ==================== Debug Section ====================
             SectionHeader(title = "Отладка")
 

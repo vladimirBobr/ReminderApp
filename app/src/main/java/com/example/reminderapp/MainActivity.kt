@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.reminderapp.feature.events.DeletedEventsScreen
 import com.example.reminderapp.feature.events.EventsEditScreen
 import com.example.reminderapp.feature.events.EventsListScreen
 import com.example.reminderapp.feature.events.EventsViewModel
@@ -35,12 +36,17 @@ class MainActivity : ComponentActivity() {
                 val editingEvent by viewModel.editingEvent.collectAsState()
                 val isRawDataVisible by viewModel.isRawDataVisible.collectAsState()
                 val isSettingsVisible by viewModel.isSettingsVisible.collectAsState()
+                val isDeletedEventsVisible by viewModel.isDeletedEventsVisible.collectAsState()
 
                 // Intercept system back button to navigate back within the app
-                BackHandler(enabled = isEditScreenVisible || isRawDataVisible || isSettingsVisible) {
+                BackHandler(
+                    enabled = isEditScreenVisible || isRawDataVisible ||
+                            isSettingsVisible || isDeletedEventsVisible
+                ) {
                     when {
                         isEditScreenVisible -> viewModel.closeEditScreen()
                         isRawDataVisible -> viewModel.closeRawData()
+                        isDeletedEventsVisible -> viewModel.closeDeletedEvents()
                         isSettingsVisible -> viewModel.closeSettings()
                     }
                 }
@@ -65,9 +71,18 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
+                    isDeletedEventsVisible -> {
+                        DeletedEventsScreen(
+                            viewModel = viewModel,
+                            onBack = { viewModel.closeDeletedEvents() },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
                     isSettingsVisible -> {
                         SettingsScreen(
                             onNavigateToRawData = { viewModel.openRawData() },
+                            onNavigateToDeletedEvents = { viewModel.openDeletedEvents() },
                             onBack = { viewModel.closeSettings() },
                             modifier = Modifier.fillMaxSize()
                         )
