@@ -2,6 +2,7 @@ package com.example.reminderapp.feature.events
 
 import com.example.reminderapp.core.model.Event
 import com.example.reminderapp.core.model.EventList
+import com.example.reminderapp.core.notification.NotificationScheduler
 import com.charleskorn.kaml.Yaml
 import com.example.reminderapp.core.model.yamlSerializersModule
 import java.io.File
@@ -16,7 +17,7 @@ import java.time.LocalTime
  *
  * On first launch, creates [activeFile] with demo data if it doesn't exist.
  */
-class EventsRepository(private val storageDir: File) {
+class EventsRepository(private val storageDir: File, private val scheduler: NotificationScheduler) {
 
     private val activeFile = File(storageDir, "events.yml")
     private val deletedFile = File(storageDir, "deleted_events.yml")
@@ -71,6 +72,7 @@ class EventsRepository(private val storageDir: File) {
     fun add(event: Event) {
         val events = getAll() + event
         writeEvents(activeFile, events)
+        scheduler.schedule(event)
     }
 
     /**
@@ -79,6 +81,7 @@ class EventsRepository(private val storageDir: File) {
     fun update(event: Event) {
         val events = getAll().map { if (it.id == event.id) event else it }
         writeEvents(activeFile, events)
+        scheduler.schedule(event)
     }
 
     // ==================== MOVE ====================
@@ -92,6 +95,8 @@ class EventsRepository(private val storageDir: File) {
             if (event.id == id) event.copy(date = event.date.plusDays(1)) else event
         }
         writeEvents(activeFile, updated)
+        val movedEvent = updated.find { it.id == id }
+        if (movedEvent != null) scheduler.schedule(movedEvent)
     }
 
     // ==================== SOFT DELETE ====================
@@ -105,6 +110,7 @@ class EventsRepository(private val storageDir: File) {
         writeEvents(activeFile, active.filter { it.id != id })
         val deleted = getDeleted() + event
         writeEvents(deletedFile, deleted)
+        scheduler.cancel(id)
     }
 
     // ==================== RESTORE ====================
@@ -118,6 +124,15 @@ class EventsRepository(private val storageDir: File) {
         writeEvents(deletedFile, deleted.filter { it.id != id })
         val active = getAll() + event
         writeEvents(activeFile, active)
+        scheduler.schedule(event)
+    }
+
+    /**
+     * Re-schedules notifications for all currently active events.
+     * Called on app startup to restore alarms after reboot.
+     */
+    fun rescheduleAllNotifications() {
+        scheduler.rescheduleAll(getAll())
     }
 
     // ==================== INTERNALS ====================
@@ -146,8 +161,10 @@ class EventsRepository(private val storageDir: File) {
     private fun ensureFilesExist() {
         if (activeFile.exists()) return
         storageDir.mkdirs()
-        writeEvents(activeFile, generateDemoEvents())
+        val demos = generateDemoEvents()
+        writeEvents(activeFile, demos)
         writeEvents(deletedFile, emptyList())
+        demos.forEach { scheduler.schedule(it) }
     }
 
     /**

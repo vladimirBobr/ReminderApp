@@ -67,6 +67,7 @@ class EventsViewModel(
             _isLoading.value = true
             try {
                 _events.value = repository.getAll()
+                repository.rescheduleAllNotifications()
                 _error.value = null
             } catch (e: Exception) {
                 _error.value = "Ошибка загрузки: ${e.localizedMessage}"
