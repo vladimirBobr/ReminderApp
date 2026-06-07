@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -91,7 +92,7 @@ fun EventsEditScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -116,6 +117,7 @@ fun EventsEditScreen(
                     { Text(titleError) }
                 } else null,
                 singleLine = true,
+                shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Next
@@ -130,6 +132,7 @@ fun EventsEditScreen(
                 label = { Text("Описание (необязательно)") },
                 minLines = 2,
                 maxLines = 4,
+                shape = RoundedCornerShape(12.dp),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Sentences,
                     imeAction = ImeAction.Done
@@ -144,11 +147,13 @@ fun EventsEditScreen(
                 label = { Text("Дата") },
                 readOnly = true,
                 enabled = false,
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             )
 
             Button(
                 onClick = { showDatePicker = true },
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Выбрать дату")
@@ -180,11 +185,13 @@ fun EventsEditScreen(
                     label = { Text("Время") },
                     readOnly = true,
                     enabled = false,
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Button(
                     onClick = { showTimePicker = true },
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Выбрать время")
@@ -195,6 +202,7 @@ fun EventsEditScreen(
             if (isEditing) {
                 OutlinedButton(
                     onClick = { date = LocalDate.now().plusDays(1) },
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Перенести на завтра →")
@@ -211,6 +219,7 @@ fun EventsEditScreen(
                     }
                 },
                 enabled = title.isNotBlank(),
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
@@ -221,6 +230,7 @@ fun EventsEditScreen(
             // Cancel button
             OutlinedButton(
                 onClick = onCancel,
+                shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)

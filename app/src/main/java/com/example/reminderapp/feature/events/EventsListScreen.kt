@@ -5,15 +5,25 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.EventNote
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -73,7 +84,7 @@ fun EventsListScreen(
                 title = {
                     Text(
                         text = "Мои события",
-                        style = MaterialTheme.typography.titleLarge
+                        style = MaterialTheme.typography.headlineLarge
                     )
                 },
                 actions = {
@@ -85,14 +96,15 @@ fun EventsListScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.openEditScreen(null) },
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -130,16 +142,31 @@ fun EventsListScreen(
             }
 
             events.isEmpty() -> {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(innerPadding),
-                    contentAlignment = Alignment.Center
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.EventNote,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Нет событий",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Нажмите + чтобы добавить",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -196,7 +223,7 @@ private fun EventList(
             top = contentPadding.calculateTopPadding() + 8.dp,
             bottom = contentPadding.calculateBottomPadding() + 16.dp
         ),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         sortedDates.forEach { date ->
             val dateEvents = groupedEvents[date] ?: return@forEach
@@ -247,7 +274,7 @@ private fun SwipeableEventCard(
 
     // Determine background based on drag direction (single threshold)
     val bgColor = when {
-        animatedOffset > thresholdPx -> MaterialTheme.colorScheme.tertiaryContainer
+        animatedOffset > thresholdPx -> MaterialTheme.colorScheme.primaryContainer
         animatedOffset < -thresholdPx -> MaterialTheme.colorScheme.errorContainer
         else -> Color.Transparent
     }
@@ -256,19 +283,24 @@ private fun SwipeableEventCard(
         animatedOffset < -thresholdPx -> "Удалить"
         else -> ""
     }
+    val bgIcon = when {
+        animatedOffset > thresholdPx -> Icons.AutoMirrored.Filled.ArrowForward
+        animatedOffset < -thresholdPx -> Icons.Filled.Delete
+        else -> null
+    }
     val bgAlignment = when {
         animatedOffset > thresholdPx -> Alignment.CenterStart
         animatedOffset < -thresholdPx -> Alignment.CenterEnd
-        else -> Alignment.CenterEnd
+        else -> Alignment.Center
     }
     val bgLabelColor = when {
-        animatedOffset > thresholdPx -> MaterialTheme.colorScheme.onTertiaryContainer
+        animatedOffset > thresholdPx -> MaterialTheme.colorScheme.onPrimaryContainer
         animatedOffset < -thresholdPx -> MaterialTheme.colorScheme.onErrorContainer
         else -> Color.Transparent
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
-        // Background label
+        // Background label with icon
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -276,11 +308,32 @@ private fun SwipeableEventCard(
                 .padding(horizontal = 20.dp),
             contentAlignment = bgAlignment
         ) {
-            Text(
-                text = bgLabel,
-                color = bgLabelColor,
-                style = MaterialTheme.typography.labelLarge
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (animatedOffset > thresholdPx) {
+                    Icon(
+                        imageVector = bgIcon!!,
+                        contentDescription = null,
+                        tint = bgLabelColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Text(
+                    text = bgLabel,
+                    color = bgLabelColor,
+                    style = MaterialTheme.typography.labelLarge
+                )
+                if (animatedOffset < -thresholdPx) {
+                    Icon(
+                        imageVector = bgIcon!!,
+                        contentDescription = null,
+                        tint = bgLabelColor,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
         }
 
         // Foreground card with offset + gesture detection
@@ -334,13 +387,26 @@ private fun DateHeader(date: LocalDate) {
         }
     }
 
-    Text(
-        text = headerText,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 16.dp, bottom = 4.dp)
-    )
+            .padding(top = 20.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Subtle accent bar before the date text
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .height(18.dp)
+                .clip(RoundedCornerShape(1.5.dp))
+                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = headerText,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }
