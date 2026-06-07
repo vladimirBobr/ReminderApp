@@ -2,22 +2,22 @@ package com.example.reminderapp.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Light theme palette (soft blue-teal) ──
+// ── Light theme palette (pastel, airy) ──
 
-// Primary – calm blue
-val Blue40 = Color(0xFF3B6BA5)
-val Blue20 = Color(0xFF1D4A7A)
-val Blue90 = Color(0xFFD6E6FF)
+// Primary – soft sky blue
+val Blue40 = Color(0xFF6B99C8)
+val Blue20 = Color(0xFF1A3550)
+val Blue90 = Color(0xFFD6E8F8)
 
-// Secondary – muted teal
-val Teal40 = Color(0xFF4A8C7C)
-val Teal20 = Color(0xFF0D2B21)
-val Teal90 = Color(0xFFCCEEE2)
+// Secondary – soft lavender
+val Lavender40 = Color(0xFFA898C0)
+val Lavender20 = Color(0xFF281D3A)
+val Lavender90 = Color(0xFFEDE4F4)
 
-// Tertiary – soft coral accent
-val Coral40 = Color(0xFFC2655A)
-val Coral20 = Color(0xFF3E110C)
-val Coral90 = Color(0xFFFFDAD4)
+// Tertiary – soft peach
+val Peach40 = Color(0xFFE8A090)
+val Peach20 = Color(0xFF4A1810)
+val Peach90 = Color(0xFFFFE0D8)
 
 // Neutral – warm greys (light theme)
 val Neutral99 = Color(0xFFFCFCFF)     // background
@@ -29,9 +29,9 @@ val NeutralVariant80 = Color(0xFF74777F)  // outline
 
 // ── Dark theme palette ──
 
-val Blue80 = Color(0xFFA8C8F0)        // primary
-val Teal80 = Color(0xFFA0D8C8)        // secondary
-val Coral80 = Color(0xFFFFB4A8)       // tertiary
+val Blue80 = Color(0xFFA0C8E8)        // primary
+val Lavender80 = Color(0xFFC0B4D8)    // secondary
+val Peach80 = Color(0xFFF4BCAC)       // tertiary
 
 val Neutral6 = Color(0xFF0F1115)      // background
 val Neutral12 = Color(0xFF1A1D23)     // surface
@@ -49,5 +49,5 @@ val OnErrorDark = Color(0xFF690005)
 
 // ── Dark theme container overrides ──
 
-val SecondaryContainerDark = Color(0xFF1D3D34)
-val TertiaryContainerDark = Color(0xFF4A1A14)
+val SecondaryContainerDark = Color(0xFF3D3058)
+val TertiaryContainerDark = Color(0xFF5A2820)

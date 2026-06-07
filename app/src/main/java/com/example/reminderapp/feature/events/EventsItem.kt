@@ -117,7 +117,7 @@ fun EventsItem(
                 Text(
                     text = event.date.dayOfMonth.toString(),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.ExtraBold,
                     color = MaterialTheme.colorScheme.primary
                 )
             }
