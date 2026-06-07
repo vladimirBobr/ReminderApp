@@ -1,14 +1,19 @@
 package com.example.reminderapp
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.reminderapp.feature.events.DeletedEventsScreen
 import com.example.reminderapp.feature.events.EventsEditScreen
@@ -19,11 +24,20 @@ import com.example.reminderapp.feature.settings.SettingsScreen
 import com.example.reminderapp.ui.theme.ReminderAppTheme
 
 class MainActivity : ComponentActivity() {
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ ->
+            // Permission result — no action needed, user can retry test notification
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val appContainer = (application as ReminderApp).container
         val repository = appContainer.eventsRepository
+
+        // Request notification permission on Android 13+
+        requestNotificationPermission()
 
         enableEdgeToEdge()
         setContent {
@@ -83,6 +97,9 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             onNavigateToRawData = { viewModel.openRawData() },
                             onNavigateToDeletedEvents = { viewModel.openDeletedEvents() },
+                            onTestNotification = {
+                                appContainer.notificationScheduler.sendTestNotification()
+                            },
                             onBack = { viewModel.closeSettings() },
                             modifier = Modifier.fillMaxSize()
                         )
@@ -94,6 +111,25 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.fillMaxSize()
                         )
                     }
+                }
+            }
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Permission already granted
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // User previously denied — request again anyway
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+                else -> {
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
         }

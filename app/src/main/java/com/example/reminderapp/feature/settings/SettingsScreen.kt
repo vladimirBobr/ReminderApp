@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -29,13 +30,16 @@ import androidx.compose.ui.unit.dp
  * Settings / Menu screen.
  * Sections can be added here over time.
  * Currently contains:
+ *  - Data ("Данные"): Deleted events viewer
  *  - Debug ("Отладка"): Raw Data viewer
+ *  - Service ("Служебное"): Test notification button
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateToRawData: () -> Unit,
     onNavigateToDeletedEvents: () -> Unit,
+    onTestNotification: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -98,6 +102,22 @@ fun SettingsScreen(
                 },
                 title = "Raw Data",
                 onClick = onNavigateToRawData
+            )
+
+            // ==================== Service Section ====================
+            SectionHeader(title = "Служебное")
+
+            SettingsItem(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Notifications,
+                        contentDescription = null,
+                        modifier = Modifier.size(24.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                },
+                title = "Тест уведомления",
+                onClick = onTestNotification
             )
         }
     }

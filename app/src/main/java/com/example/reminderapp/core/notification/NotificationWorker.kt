@@ -1,10 +1,14 @@
 package com.example.reminderapp.core.notification
 
+import android.Manifest
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.example.reminderapp.MainActivity
@@ -37,6 +41,13 @@ class NotificationWorker(
      * Builds and displays the notification via [NotificationManager].
      */
     private fun showNotification(eventId: String, title: String, description: String) {
+        // Skip if notification permission is not granted (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                applicationContext, Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) return
+
         // Intent that opens MainActivity when notification is tapped
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
